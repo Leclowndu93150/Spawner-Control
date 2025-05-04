@@ -127,7 +127,6 @@ public class SpawnerEventHandler {
 
         if (level.getBlockState(pos).getBlock() == Blocks.SPAWNER) {
             boolean isUsingModItem = heldItem.getItem() == SpawnerControl.SPAWNER_DISABLER.get() ||
-                    heldItem.getItem() == SpawnerControl.SPAWNER_TOGGLER.get() ||
                     heldItem.getItem() == SpawnerControl.SPAWNER_BREAKER.get();
 
             if (!isUsingModItem && !player.getAbilities().instabuild) {

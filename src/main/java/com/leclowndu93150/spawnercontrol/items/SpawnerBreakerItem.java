@@ -8,6 +8,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -34,6 +36,7 @@ public class SpawnerBreakerItem extends Item {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         Player player = context.getPlayer();
+        ItemStack itemStack = context.getItemInHand();
 
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
@@ -99,14 +102,20 @@ public class SpawnerBreakerItem extends Item {
                     level.addFreshEntity(SpawnerHelper.createItemEntity(level, pos, spawnerStack));
 
                     if (player != null) {
-                        ItemStack itemStack = context.getItemInHand();
                         if (!player.getAbilities().instabuild) {
-                            itemStack.hurt(1, level.getRandom(), null);
+                             
+                            itemStack.setDamageValue(itemStack.getMaxDamage());
+
+                             
+                            if (itemStack.getDamageValue() >= itemStack.getMaxDamage()) {
+                                itemStack.shrink(1);
+                                player.sendMessage(new TextComponent("Your spawner breaker has broken.").withStyle(ChatFormatting.YELLOW), player.getUUID());
+                            }
                         }
 
                         player.sendMessage(new TextComponent("Spawner collected successfully.").withStyle(ChatFormatting.GREEN), player.getUUID());
                     }
-
+                    level.playSound(null, pos, SoundEvents.ITEM_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
                     return InteractionResult.CONSUME;
                 } catch (Exception e) {
                     if (player != null) {
@@ -123,7 +132,7 @@ public class SpawnerBreakerItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(new TextComponent("Breaks a spawner and preserves its data").withStyle(ChatFormatting.GRAY));
-        tooltip.add(new TextComponent("Durability: " + (stack.getMaxDamage() - stack.getDamageValue()) + "/" + stack.getMaxDamage()).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(new TextComponent("One-time use item").withStyle(ChatFormatting.RED));
         super.appendHoverText(stack, level, tooltip, flag);
     }
 

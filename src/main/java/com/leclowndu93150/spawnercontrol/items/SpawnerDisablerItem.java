@@ -7,6 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -31,6 +33,7 @@ public class SpawnerDisablerItem extends Item {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         Player player = context.getPlayer();
+        ItemStack itemStack = context.getItemInHand();
 
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
@@ -47,7 +50,6 @@ public class SpawnerDisablerItem extends Item {
 
                 if (!stillDisabled) {
                      
-                     
                     long disableDurationMs = SpawnerControlConfig.DISABLER_DURATION.get() * 50L;
                     long currentTime = System.currentTimeMillis();
                     long disableUntilTime = currentTime + disableDurationMs;
@@ -61,15 +63,15 @@ public class SpawnerDisablerItem extends Item {
                     level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
 
                     if (player != null) {
-                        ItemStack itemStack = context.getItemInHand();
                         if (!player.getAbilities().instabuild) {
+                             
                             itemStack.shrink(1);
                         }
 
-                        int durationMinutes = SpawnerControlConfig.DISABLER_DURATION.get() / 1200;  
+                        int durationMinutes = SpawnerControlConfig.DISABLER_DURATION.get() / 1200;
                         player.sendMessage(new TextComponent("Spawner disabled for " + durationMinutes + " minutes.").withStyle(ChatFormatting.GREEN), player.getUUID());
                     }
-
+                    level.playSound(null, pos, SoundEvents.ITEM_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
                     return InteractionResult.CONSUME;
                 } else {
                     if (player != null) {
@@ -88,8 +90,14 @@ public class SpawnerDisablerItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        int durationMinutes = SpawnerControlConfig.DISABLER_DURATION.get() / 1200;  
+        int durationMinutes = SpawnerControlConfig.DISABLER_DURATION.get() / 1200;
         tooltip.add(new TextComponent("Temporarily disables a spawner for " + durationMinutes + " minutes").withStyle(ChatFormatting.GRAY));
+        tooltip.add(new TextComponent("One-time use item").withStyle(ChatFormatting.RED));
         super.appendHoverText(stack, level, tooltip, flag);
+    }
+
+    @Override
+    public boolean isFoil(ItemStack stack) {
+        return SpawnerControlConfig.SPAWNER_DROP_ENCHANTED.get() || super.isFoil(stack);
     }
 }
